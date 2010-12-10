@@ -76,7 +76,7 @@ class XableRTC(OpenRTM_aist.DataFlowComponentBase):
         if pname in self._xinports:
             port = self._xinports[pname]
             targetDataType = eval("RTC." + info.properties.getProperty("data_type"))
-            port.addConnectorDataListener(OpenRTM_aist.ConnectorDataListenerType.ON_BUFFER_WRITE,
+            port.addConnectorDataListener(OpenRTM_aist.ConnectorDataListenerType.ON_RECEIVED,
                                           DataListener(pname, self, targetDataType))
             port.addConnectorListener(OpenRTM_aist.ConnectorListenerType.ON_DISCONNECT,
                                       DisConnectListener(pname, self), True)
