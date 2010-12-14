@@ -8,13 +8,13 @@ import RTC
 
 class DataListener(OpenRTM_aist.ConnectorDataListenerT):
     '''callback function for data received event'''
-    def __init__(self, name, obj, dtype):
-        self._name = name
+    def __init__(self, info, obj, dtype):
+        self._info = info
         self._obj = obj
         self._dtype = dtype
     def __call__(self, info, cdrdata):
         data = OpenRTM_aist.ConnectorDataListenerT.__call__(self, info, cdrdata, self._dtype(RTC.Time(0, 0), None))
-        self._obj.onData(self._name, data)
+        self._obj.onData(self._info, data)
 
 class ConnectListener(OpenRTM_aist.ConnectorListener):
     '''callback function for connect event'''
@@ -75,9 +75,28 @@ class XableRTC(OpenRTM_aist.DataFlowComponentBase):
         '''connect callback'''
         if pname in self._xinports:
             port = self._xinports[pname]
-            targetDataType = eval("RTC." + info.properties.getProperty("data_type"))
+            targetDataType = "RTC." + info.properties.getProperty("data_type")
+            targetDataClass = eval(targetDataType)
+
+            # get extra information about target port
+            ninfo = {}
+            my_instance_name = self._properties.getProperty("instance_name")
+            for p in info.ports:
+                targetport = self._orb.string_to_object(p)._narrow(OpenRTM_aist.PortBase)
+                portprofile = targetport.get_port_profile()
+                componentprofile = portprofile.owner.get_component_profile()
+                if my_instance_name != componentprofile.instance_name:
+                    ninfo['component'] = componentprofile.instance_name
+                    ninfo['type'] = componentprofile.type_name
+                    ninfo['category'] = componentprofile.category
+                    ninfo['port'] = portprofile.name.split('.')[-1]
+            ninfo['dataType'] = targetDataType
+
+            # register data receive callback
             port.addConnectorDataListener(OpenRTM_aist.ConnectorDataListenerType.ON_RECEIVED,
-                                          DataListener(pname, self, targetDataType))
+                                          DataListener(ninfo, self, targetDataClass))
+
+            # register disconnect callback
             port.addConnectorListener(OpenRTM_aist.ConnectorListenerType.ON_DISCONNECT,
                                       DisConnectListener(pname, self), True)
             self.addIncreasableInPort()
@@ -93,12 +112,12 @@ class XableRTC(OpenRTM_aist.DataFlowComponentBase):
         '''disconnect callback'''
         if pname in self._xinports:
             port = self._xinports[pname]
-            self.removeInport(port)
+            self.removeInPort(port)
         elif pname in self._xoutports:
-            port = self._xinports[pname]
-            self.removeInport(port)
+            port = self._xoutports[pname]
+            self.removeOutPort(port)
 
-    def onData(self, pname, data):
+    def onData(self, info, data):
         '''data receive callback'''
         pass
 

@@ -26,8 +26,8 @@ SampleXableRTC_spec = ["implementation_id", "SampleXableRTC",
                        ""]
 
 class SampleXableRTC(XableRTC):
-    def onData(self, pname, data):
-        print "Got data in port: %s" % (pname,)
+    def onData(self, info, data):
+        pprint(info)
         pprint(data)
         print ""
 
