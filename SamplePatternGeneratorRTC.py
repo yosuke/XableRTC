@@ -52,11 +52,13 @@ class SamplePatternGeneratorRTC(OpenRTM_aist.DataFlowComponentBase):
         for i in range(self._intnum):
             pname = "intport%s" % (i,)
             self._intdata[pname].data = randint(1, 10)
+            OpenRTM_aist.setTimestamp(self._intdata[pname])
             self._intports[pname].write(self._intdata[pname])
         if randint(1, 10) > 3:
             self._strdata.data = "normal"
         else:
             self._strdata.data = "emergency"
+        OpenRTM_aist.setTimestamp(self._strdata)
         self._strport.write(self._strdata)
         return RTC.RTC_OK
 
